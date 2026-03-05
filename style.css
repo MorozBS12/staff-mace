@@ -1,0 +1,164 @@
+body {
+    background-color: #0b0d13;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.mace-bg {
+    position: fixed;
+    top: 50%;
+    left: 5%;
+    width: 400px;
+    height: 400px;
+    background: url('https://minecraft.wiki/images/Mace_JE1_BE1.png') no-repeat center;
+    background-size: contain;
+    opacity: 0.04;
+    z-index: -1;
+    transform: translateY(-50%) rotate(-15deg);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Навигация */
+.nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 30px 0;
+}
+.nav-btn {
+    cursor: pointer;
+    color: rgba(255,255,255,0.4);
+    padding: 12px 24px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    font-size: 14px;
+    font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: 0.3s;
+}
+.nav-btn.active {
+    background: #5c78ff;
+    color: #fff;
+    border-color: #5c78ff;
+    box-shadow: 0 0 20px rgba(92, 120, 255, 0.3);
+}
+
+/* Заголовки */
+.main-title { text-align: center; margin-bottom: 40px; }
+.main-title img { width: 45px; vertical-align: middle; margin-right: 12px; filter: drop-shadow(0 0 10px #5c78ff); }
+.main-title h1 { display: inline-block; font-size: 26px; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+.main-title span { color: #5c78ff; }
+
+/* Переключение контента */
+.content-section { display: none; }
+.content-section.active { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* СТИЛИ STAFF (из твоего кода) */
+.staff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+.staff-card { background: rgba(22, 26, 36, 0.8); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 18px; backdrop-filter: blur(10px); transition: 0.3s; }
+.staff-card:hover { transform: scale(1.02); border-color: #5c78ff; }
+.card-header { color: #5c78ff; font-size: 10px; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; }
+.player { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ava { width: 28px; height: 28px; border-radius: 4px; }
+.name { font-size: 14px; font-weight: 500; }
+.tag { margin-left: auto; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; border: 1px solid; }
+.tag-owner { color: #ff4d4d; border-color: #ff4d4d; }
+
+/* СТИЛИ НОРМЫ (Пьедестал) */
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-bottom: 40px; }
+.podium-card {
+    background: rgba(22, 26, 36, 0.8);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    width: 180px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.rank-1 { border-color: #f1c40f; transform: scale(1.1); z-index: 2; box-shadow: 0 10px 30px rgba(241,196,15,0.1); }
+.rank-2 { border-color: #bdc3c7; }
+.rank-3 { border-color: #e67e22; }
+.skin { width: 75px; margin: 10px 0; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+.rank-icon { font-weight: 900; font-size: 18px; margin-bottom: 10px; color: #5c78ff; }
+.p-name { font-weight: 700; font-size: 15px; margin-bottom: 5px; }
+.p-pts { font-size: 11px; color: #5c78ff; background: rgba(92,120,255,0.1); padding: 3px 10px; border-radius: 20px; display: inline-block; }
+
+/* СТИЛИ НОРМЫ (Список) */
+.stats-list { background: rgba(22, 26, 36, 0.5); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+.list-row { display: grid; grid-template-columns: 50px 1fr 1fr; padding: 12px 20px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.list-row.header { color: #5c78ff; font-weight: 800; font-size: 11px; background: rgba(255,255,255,0.02); }
+.player-info { display: flex; align-items: center; gap: 12px; }
+.player-info img { width: 32px; height: 32px; border-radius: 5px; }
+.num { font-weight: 800; color: rgba(255,255,255,0.2); }
+.tiers { display: flex; gap: 5px; justify-content: flex-end; }
+.t { font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; color: #fff; }
+.ht3 { background: #00b894; }
+.lt3 { background: #0984e3; }
+.red { background: #d63031; }
+
+/* Варны */
+.warn-card { border: 1px solid rgba(255, 77, 77, 0.3); }
+.warn-text { color: #ff4d4d; background: rgba(255,77,77,0.1); padding: 6px; border-radius: 4px; font-size: 12px; }
+/* Оновлені ефекти для карток подиуму */
+.podium-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ефект при наведенні на будь-яку картку */
+.podium-card:hover {
+    transform: translateY(-10px) scale(1.05);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* Особливий ефект для 1 місця (Золоте сяйво) */
+.rank-1 {
+    border: 2px solid #f1c40f !important;
+    box-shadow: 0 0 20px rgba(241, 196, 15, 0.2);
+}
+
+.rank-1:hover {
+    box-shadow: 0 0 40px rgba(241, 196, 15, 0.4);
+}
+
+/* Анімація появи (плавне випливання) */
+.podium-card {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.content-section.active .podium-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Затримка появи для ефекту черговості */
+.rank-1 { transition-delay: 0.1s; }
+.rank-2 { transition-delay: 0.2s; }
+.rank-3 { transition-delay: 0.3s; }
+
+/* Стиль для бейджів з тестами */
+.pts-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    background: #5c78ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 10px;
+    box-shadow: 0 4px 10px rgba(92, 120, 255, 0.3);
+}
+
+/* Ефект для
