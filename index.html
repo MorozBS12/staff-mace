@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MACE Network</title>
+<link rel="icon" href="https://minecraft.wiki/images/Mace_JE1_BE1.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#070810;--surface:#0d1022;--border:rgba(255,255,255,0.07);
+    --accent:#5c78ff;--accent2:#7c9bff;
+    --gold:#f5c842;--silver:#c0c8d8;--bronze:#d4845a;
+    --red:#ff4d6a;--purple:#b36fff;--orange:#ff9f43;--cyan:#00d4ff;
+    --text:#e8ecff;--muted:rgba(232,236,255,0.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  #canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+  .orb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0;}
+  .orb1{width:700px;height:700px;background:rgba(92,120,255,0.06);top:-250px;right:-200px;animation:od 12s ease-in-out infinite alternate;}
+  .orb2{width:500px;height:500px;background:rgba(179,111,255,0.05);bottom:100px;left:-150px;animation:od 15s ease-in-out infinite alternate-reverse;}
+  @keyframes od{from{transform:translate(0,0)}to{transform:translate(40px,30px)}}
+  .bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(92,120,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(92,120,255,0.025) 1px,transparent 1px);
+    background-size:64px 64px;}
+
+  .wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:0 18px 70px;}
+
+  /* HEADER */
+  header{display:flex;align-items:center;justify-content:center;gap:14px;padding:40px 0 8px;}
+  .logo-img{width:40px;height:40px;filter:drop-shadow(0 0 20px rgba(92,120,255,0.9));animation:fl 3.5s ease-in-out infinite;}
+  @keyframes fl{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-7px) rotate(6deg)}}
+  .logo-text{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:7px;text-transform:uppercase;}
+  .logo-text span{color:var(--accent);}
+
+  /* NAV */
+  nav{display:flex;justify-content:center;gap:8px;padding:22px 0 40px;flex-wrap:wrap;}
+  .nav-btn{cursor:pointer;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:10px 26px;border-radius:100px;border:1px solid var(--border);background:var(--surface);color:var(--muted);transition:all .22s;user-select:none;}
+  .nav-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.15);}
+  .nav-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 28px rgba(92,120,255,0.45),inset 0 1px 0 rgba(255,255,255,0.2);}
+
+  /* SECTION */
+  .sec{display:none;}
+  .sec.active{display:block;animation:fu .35s ease;}
+  @keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .sec-title{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* CARDS */
+  .staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:11px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 17px;transition:all .25s;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;inset:0;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,0.025) 0%,transparent 55%);pointer-events:none;}
+  .card:hover{transform:translateY(-4px);border-color:rgba(92,120,255,0.4);box-shadow:0 14px 40px rgba(0,0,0,0.45),0 0 0 1px rgba(92,120,255,0.1);}
+  .card-label{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:13px;display:flex;align-items:center;gap:6px;}
+  .card-label::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px var(--accent);flex-shrink:0;}
+  .player{display:flex;align-items:center;gap:10px;padding:5px 0;}
+  .player+.player{border-top:1px solid rgba(255,255,255,0.035);}
+  .ava{width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;image-rendering:pixelated;background:#161b2e;}
+  .pname{font-size:13.5px;font-weight:500;color:var(--text);flex:1;}
+  .tag{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:1px;padding:3px 7px;border-radius:5px;text-transform:uppercase;border:1px solid currentColor;flex-shrink:0;}
+  .t-owner{color:#ff4d6a;}.t-manager{color:var(--orange);}.t-dev{color:var(--cyan);}.t-admin{color:#ff6b6b;}.t-mt{color:var(--purple);}.t-mod{color:#45aaf2;}.t-stt{color:var(--orange);}.t-tt{color:#a29bfe;}
+  .card-warn{border-color:rgba(255,77,106,0.25);background:rgba(255,77,106,0.04);}
+  .warn-row{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;background:rgba(255,77,106,0.09);border:1px solid rgba(255,77,106,0.22);margin-top:5px;font-size:13px;font-weight:600;color:var(--red);}
+  .card-vac{border-color:rgba(255,255,255,0.09);}
+  .vac-row{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);margin-top:5px;font-size:13px;font-weight:500;color:var(--text);}
+
+  /* PODIUM */
+  .podium{display:flex;justify-content:center;align-items:flex-end;gap:14px;margin-bottom:30px;flex-wrap:wrap;}
+  .p-card{border-radius:20px;padding:22px 18px 20px;text-align:center;width:180px;position:relative;overflow:hidden;transition:transform .3s cubic-bezier(.175,.885,.32,1.275);cursor:default;}
+  .p-card:hover{transform:translateY(-8px) scale(1.04) !important;}
+  .p-card::after{content:'';position:absolute;top:-60%;left:-60%;width:60%;height:220%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.06) 50%,transparent 60%);transform:rotate(15deg);animation:shim 4s ease-in-out infinite;}
+  @keyframes shim{0%,100%{left:-60%}50%{left:120%}}
+  .p-card-1{background:linear-gradient(155deg,#1c1a10 0%,#0d1022 100%);border:1.5px solid rgba(245,200,66,0.55);box-shadow:0 0 50px rgba(245,200,66,0.12),inset 0 1px 0 rgba(245,200,66,0.18);transform:scale(1.1);z-index:2;}
+  .p-card-2{background:linear-gradient(155deg,#141724 0%,#0d1022 100%);border:1.5px solid rgba(192,200,216,0.35);box-shadow:0 0 25px rgba(192,200,216,0.06);}
+  .p-card-3{background:linear-gradient(155deg,#1a1410 0%,#0d1022 100%);border:1.5px solid rgba(212,132,90,0.35);box-shadow:0 0 25px rgba(212,132,90,0.06);}
+  .p-emoji{font-size:28px;margin-bottom:6px;display:block;animation:eb 2s ease-in-out infinite;}
+  .p-card-2 .p-emoji{animation-delay:.3s;}.p-card-3 .p-emoji{animation-delay:.6s;}
+  @keyframes eb{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.12)}}
+  .p-skin{width:76px;margin:0 auto 10px;display:block;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.7));image-rendering:pixelated;transition:transform .3s;}
+  .p-card:hover .p-skin{transform:scale(1.08) translateY(-3px);}
+  .p-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:9px;color:var(--text);}
+  .p-score{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 13px;border-radius:100px;}
+  .p-card-1 .p-score{background:rgba(245,200,66,0.13);color:var(--gold);border:1px solid rgba(245,200,66,0.3);}
+  .p-card-2 .p-score{background:rgba(192,200,216,0.1);color:var(--silver);border:1px solid rgba(192,200,216,0.25);}
+  .p-card-3 .p-score{background:rgba(212,132,90,0.1);color:var(--bronze);border:1px solid rgba(212,132,90,0.25);}
+  .rank-glow{position:absolute;inset:0;border-radius:20px;pointer-events:none;animation:rp 2.5s ease-in-out infinite;}
+  @keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,0.25)}50%{box-shadow:0 0 0 8px rgba(245,200,66,0)}}
+
+  /* TABLE */
+  .stats-table{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .st-head{display:grid;grid-template-columns:50px 1fr auto;padding:12px 20px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .st-row{display:grid;grid-template-columns:50px 1fr auto;padding:12px 20px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.028);transition:background .2s;opacity:0;animation:fu .35s ease forwards;}
+  .st-row:last-child{border-bottom:none;}
+  .st-row:hover{background:rgba(255,255,255,0.025);}
+  .st-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.18);}
+  .st-player{display:flex;align-items:center;gap:11px;}
+  .st-player img{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,0.09);image-rendering:pixelated;background:#161b2e;}
+  .st-player b{font-size:14px;font-weight:600;color:var(--text);}
+  .st-score{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent2);text-align:right;white-space:nowrap;}
+  .zero{color:rgba(255,255,255,0.2) !important;}
+
+  @media(max-width:600px){
+    header{padding:26px 0 4px;}
+    .logo-text{font-size:21px;letter-spacing:4px;}
+    .logo-img{width:32px;height:32px;}
+    nav{padding:16px 0 28px;gap:6px;}
+    .nav-btn{padding:9px 16px;font-size:10px;}
+    .staff-grid{grid-template-columns:1fr;}
+    .podium{flex-direction:column;align-items:center;gap:10px;}
+    .p-card{width:88%;max-width:290px;}
+    .p-card-1{transform:scale(1) !important;order:-1;}
+    .p-card:hover{transform:translateY(-6px) !important;}
+    .p-skin{width:65px;}
+    .st-head,.st-row{grid-template-columns:40px 1fr auto;padding:10px 14px;}
+    .st-player img{width:28px;height:28px;border-radius:6px;}
+    .st-player b{font-size:13px;}
+    .st-score{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="bg-grid"></div>
+
+<div class="wrap">
+  <header>
+    <img class="logo-img" src="https://minecraft.wiki/images/Mace_JE1_BE1.png" alt="mace">
+    <div class="logo-text">M<span>A</span>CE</div>
+  </header>
+
+  <nav>
+    <div class="nav-btn active" onclick="show('staff',this)">Состав команды</div>
+    <div class="nav-btn" onclick="show('stats',this)">Недельная норма</div>
+  </nav>
+
+  <!-- STAFF -->
+  <div id="staff" class="sec active">
+    <div class="sec-title">Участники сети</div>
+    <div class="staff-grid">
+
+      <div class="card">
+        <div class="card-label">Владелец сети</div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/Kw1st/32" alt="Kw1st">
+          <span class="pname">Kw1st</span><span class="tag t-owner">OWNER</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Менеджер сети</div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/wrldome/32" alt="wrldome">
+          <span class="pname">wrldome</span><span class="tag t-manager">MANAGER</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Разработчики</div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/Fanya/32" alt="Fanya">
+          <span class="pname">Fanya</span><span class="tag t-dev">DEV</span>
+        </div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/Misaqwwe/32" alt="Misaqwwe">
+          <span class="pname">Misaqwwe</span><span class="tag t-dev">DEV</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Администратор тирлиста</div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/Beziky/32" alt="Beziky">
+          <span class="pname">Beziky</span><span class="tag t-admin">ADMIN</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Менеджеры тирлиста</div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/MorozBS/32" alt="MorozBS">
+          <span class="pname">MorozBS</span><span class="tag t-mt">M. TIER</span>
+        </div>
+        <div class="player">
+          <img class="ava" src="https://minotar.net/avatar/pens1oner/32" alt="pens1oner">
+          <span class="pname">pens1oner</span><span class="tag t-mt">M. TIER</span>
+        </div>
+      </div>
+
+  <div class="card">
+  <div class="card-label">Модераторы</div>
+  
+  <div class="player">
+    <img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_">
+    <span class="pname">_lol_goga_</span>
+    <span class="tag t-mod">MOD</span>
+  </div>
+
+  <div class="player">
+    <img class="ava" src="https://minotar.net/avatar/Hig3rt/32" alt="Hig3rt">
+    <span class="pname">Hig3rt</span>
+    <span class="tag t-mod">MOD</span>
+  </div>
+
+<div class="player">
+    <img class="ava" src="https://minotar.net/avatar/MorozBS/32" alt="Hig3rt">
+    <span class="pname">MorozBS</span>
+    <span class="tag t-mod">MOD</span>
+</div>
+<div class="player">
+    <img class="ava" src="https://minotar.net/avatar/pens1oner/32" alt="Hig3rt">
+    <span class="pname">pens1oner</span>
+    <span class="tag t-mod">MOD</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-label">Старшие тиртестеры</div>
+  
+  <div class="player">
+    <img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_">
+    <span class="pname">_lol_goga_</span>
+    <span class="tag t-stt">SR. TT</span>
+  </div>
+</div>
+
+      <div class="card">
+        <div class="card-label">Официальные тиртестеры</div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/serenadaa/32" alt="serenadaa"><span class="pname">serenadaa</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/X_Frisk_o/32" alt="X_Frisk_o"><span class="pname">X_Frisk_o</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/LaGGenn/32" alt="LaGGenn"><span class="pname">LaGGenn</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/Deluxxx21/32" alt="Deluxxx21"><span class="pname">Deluxxx21</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/Magmarss/32" alt="Magmarss"><span class="pname">Magmarss</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/quartor_/32" alt="quartor_"><span class="pname">quartor_</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_"><span class="pname">_lol_goga_</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/Hig3rt/32" alt="Hig3rt"><span class="pname">Hig3rt</span><span class="tag t-tt">TT</span></div>
+        <div class="player"><img class="ava" src="https://minotar.net/avatar/midzu5/32" alt="midzu5"><span class="pname">midzu5</span><span class="tag t-tt">TT</span></div>
+      </div>
+
+      <div class="card card-warn">
+        <div class="card-label" style="color:var(--red)">Варны сети</div>
+        <div class="warn-row">⚠️ &nbsp;Hig3rt &nbsp;<span style="opacity:.6">— 1 / 3</span></div>
+      </div>
+
+      <div class="card card-vac">
+        <div class="card-label" style="color:rgba(255,255,255,0.45)">Отпуска</div>
+        <div class="vac-row">🌴 &nbsp;LaGGenn</div>
+        <div class="vac-row">🌴 &nbsp;X_Frisk_o</div>
+        <div class="vac-row">🌴 &nbsp;midzu5</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="stats" class="sec">
+    <div class="sec-title">Недельная норма</div>
+    <div class="podium" id="podium"></div>
+    <div class="stats-table">
+      <div class="st-head">
+        <span>#</span><span>Игрок</span><span>Тесты</span>
+      </div>
+      <div id="st-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const players=[
+  {name:"Deluxxx21",tests:33},
+  {name:"quartor_",tests:10},
+  {name:"Hig3rt",tests:2},
+  {name:"_lol_goga_",tests:2},
+  {name:"LaGGenn",tests:2},
+  {name:"serenadaa",tests:1},
+  {name:"Magmarss",tests:1},
+  {name:"midzu5",tests:6},
+  {name:"X_Frisk_o",tests:0},
+];
+
+function plural(n){
+  let d=n%10,dd=n%100;
+  if(dd>=11&&dd<=14)return'тестов';
+  if(d===1)return'тест';
+  if(d>=2&&d<=4)return'теста';
+  return'тестов';
+}
+
+function show(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='stats')renderStats();
+}
+
+function renderStats(){
+  const sorted=[...players].sort((a,b)=>b.tests-a.tests);
+  const podium=document.getElementById('podium');
+  const list=document.getElementById('st-list');
+  podium.innerHTML='';list.innerHTML='';
+
+  // order: 2nd, 1st, 3rd visually
+  const order=[1,0,2];
+  const cls=['p-card-2','p-card-1','p-card-3'];
+  const emojis=['🥈','🔥','🥉'];
+
+  order.forEach((ri,i)=>{
+    const p=sorted[ri];if(!p)return;
+    const glow=i===1?'<div class="rank-glow"></div>':'';
+    podium.innerHTML+=`
+      <div class="p-card ${cls[i]}">
+        ${glow}
+        <span class="p-emoji">${emojis[i]}</span>
+        <img class="p-skin"
+          src="https://minotar.net/body/${encodeURIComponent(p.name)}/80"
+          alt="${p.name}" loading="lazy">
+        <div class="p-name">${p.name}</div>
+        <div class="p-score">${p.tests} ${plural(p.tests)}</div>
+      </div>`;
+  });
+
+  sorted.slice(3).forEach((p,i)=>{
+    const z=p.tests===0;
+    list.innerHTML+=`
+      <div class="st-row" style="animation-delay:${i*.06}s">
+        <span class="st-num">${i+4}</span>
+        <div class="st-player">
+          <img src="https://minotar.net/avatar/${encodeURIComponent(p.name)}/34" alt="${p.name}" loading="lazy">
+          <b>${p.name}</b>
+        </div>
+        <span class="st-score${z?' zero':''}">${p.tests} ${plural(p.tests)}</span>
+      </div>`;
+  });
+}
+
+/* PARTICLES */
+(function(){
+  const c=document.getElementById('canvas');
+  const ctx=c.getContext('2d');
+  let W,H,dots=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<55;i++)dots.push({x:Math.random()*2000,y:Math.random()*1400,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.5+.4,a:Math.random()*.45+.15});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    dots.forEach(d=>{
+      d.x+=d.vx;d.y+=d.vy;
+      if(d.x<0)d.x=W;if(d.x>W)d.x=0;
+      if(d.y<0)d.y=H;if(d.y>H)d.y=0;
+      ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(92,120,255,${d.a})`;ctx.fill();
+    });
+    for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
+      const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<130){ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.strokeStyle=`rgba(92,120,255,${.08*(1-dist/130)})`;ctx.lineWidth=.6;ctx.stroke();}
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
