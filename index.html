@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MACE Network</title>
+<link rel="icon" href="https://minecraft.wiki/images/Mace_JE1_BE1.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06070f;--s1:#0b0d1a;--s2:#0f1120;
+  --acc:#5c78ff;--acc2:#7c9bff;--acc3:#a8baff;
+  --gold:#f5c842;--silver:#c0c8d8;--bronze:#d4845a;
+  --red:#ff4d6a;--purple:#b36fff;--orange:#ff9f43;--cyan:#00d4ff;--green:#2ecc71;
+  --text:#e8ecff;--muted:rgba(232,236,255,0.38);--dim:rgba(232,236,255,0.14);
+  --ht:#ff4d6a;--lt:#45aaf2;--bl:#a29bfe;
+  --border:rgba(255,255,255,0.06);--border2:rgba(92,120,255,0.18);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;
+  cursor:none;
+}
+
+/* ══ CURSOR ══ */
+#cur{position:fixed;width:10px;height:10px;background:var(--acc);border-radius:50%;
+  pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+  box-shadow:0 0 12px var(--acc),0 0 30px rgba(92,120,255,0.4);
+  transition:width .12s,height .12s,background .2s;mix-blend-mode:screen;}
+#cur-r{position:fixed;width:34px;height:34px;border:1.5px solid rgba(92,120,255,0.45);
+  border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);
+  transition:width .15s,height .15s,border-color .2s;}
+
+/* ══ CANVAS ══ */
+#cv{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ══ BG ══ */
+.orb{position:fixed;border-radius:50%;filter:blur(140px);pointer-events:none;z-index:0;}
+.o1{width:800px;height:800px;background:rgba(92,120,255,0.07);top:-300px;right:-200px;animation:od 14s ease-in-out infinite alternate;}
+.o2{width:550px;height:550px;background:rgba(179,111,255,0.05);bottom:50px;left:-180px;animation:od 18s 2s ease-in-out infinite alternate-reverse;}
+.o3{width:400px;height:400px;background:rgba(0,212,255,0.04);top:50%;left:45%;animation:od2 20s ease-in-out infinite;}
+@keyframes od{from{transform:translate(0,0)scale(1)}to{transform:translate(50px,40px)scale(1.08)}}
+@keyframes od2{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(-30px,30px)scale(1.15)}}
+
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(92,120,255,0.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(92,120,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:grid-drift 50s linear infinite;}
+@keyframes grid-drift{0%{background-position:0 0}100%{background-position:60px 60px}}
+
+.scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.025) 3px,rgba(0,0,0,0.025) 6px);}
+
+/* neon corner brackets */
+.nc{position:fixed;width:100px;height:100px;pointer-events:none;z-index:5;}
+.nc.tl{top:18px;left:18px;border-top:1px solid rgba(92,120,255,0.25);border-left:1px solid rgba(92,120,255,0.25);}
+.nc.tr{top:18px;right:18px;border-top:1px solid rgba(92,120,255,0.25);border-right:1px solid rgba(92,120,255,0.25);}
+.nc.bl{bottom:18px;left:18px;border-bottom:1px solid rgba(92,120,255,0.25);border-left:1px solid rgba(92,120,255,0.25);}
+.nc.br{bottom:18px;right:18px;border-bottom:1px solid rgba(92,120,255,0.25);border-right:1px solid rgba(92,120,255,0.25);}
+.nc::before{content:'';position:absolute;width:5px;height:5px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);animation:nc-blink 2.5s ease-in-out infinite;}
+.nc.tl::before{top:-2.5px;left:-2.5px;}.nc.tr::before{top:-2.5px;right:-2.5px;}
+.nc.bl::before{bottom:-2.5px;left:-2.5px;}.nc.br::before{bottom:-2.5px;right:-2.5px;}
+@keyframes nc-blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ══ LAYOUT ══ */
+.wrap{position:relative;z-index:10;max-width:1160px;margin:0 auto;padding:0 18px 80px;}
+
+/* ══ HEADER ══ */
+header{display:flex;align-items:center;justify-content:center;gap:16px;padding:48px 0 10px;
+  animation:fade-up .7s cubic-bezier(.16,1,.3,1) both;}
+
+.logo-img{width:46px;height:46px;
+  filter:drop-shadow(0 0 24px rgba(92,120,255,1)) drop-shadow(0 0 60px rgba(92,120,255,0.5));
+  animation:fl 3.5s ease-in-out infinite, logo-in 1s cubic-bezier(.16,1,.3,1) both;}
+@keyframes fl{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-9px) rotate(6deg)}}
+@keyframes logo-in{from{opacity:0;transform:scale(0) rotate(-180deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+
+.logo-text{
+  font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:10px;text-transform:uppercase;
+  position:relative;
+  background:linear-gradient(135deg,#fff 0%,var(--acc3) 40%,var(--acc) 70%,var(--cyan) 100%);
+  background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:logo-grad 6s ease infinite,glitch-t 9s 4s infinite;
+}
+@keyframes logo-grad{0%,100%{background-position:0%}50%{background-position:100%}}
+@keyframes glitch-t{
+  0%,88%,100%{clip-path:none;transform:none;}
+  89%{clip-path:polygon(0 15%,100% 15%,100% 40%,0 40%);transform:translate(-3px,0);}
+  90%{clip-path:polygon(0 55%,100% 55%,100% 75%,0 75%);transform:translate(3px,0);}
+  91%{clip-path:none;transform:none;}
+}
+.logo-text::before{
+  content:'MACE';position:absolute;top:0;left:0;
+  font-size:30px;font-weight:800;letter-spacing:10px;
+  background:linear-gradient(135deg,var(--cyan),var(--acc));
+  background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:glitch-l 9s 4s infinite;
+}
+@keyframes glitch-l{
+  0%,88%,100%{clip-path:none;opacity:0;}
+  89%{clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%);transform:translate(-2px,0);opacity:.8;}
+  90%{clip-path:none;opacity:0;}
+  90.5%{clip-path:polygon(0 60%,100% 60%,100% 80%,0 80%);transform:translate(2px,0);opacity:.7;}
+  91%{clip-path:none;opacity:0;}
+}
+
+.logo-sub{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:5px;color:var(--muted);
+  text-transform:uppercase;text-align:center;margin-top:6px;
+  animation:type-in 2s steps(7,end) 1s both;overflow:hidden;white-space:nowrap;width:0;
+}
+@keyframes type-in{0%{width:0;opacity:1}100%{width:100%;opacity:1}}
+
+/* ══ STATUS BAR ══ */
+.status-bar{
+  display:flex;align-items:center;justify-content:center;gap:22px;
+  margin:16px auto 0;padding:10px 28px;width:fit-content;
+  background:rgba(255,255,255,0.025);border:1px solid var(--border2);border-radius:100px;
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px;
+  animation:fade-up .6s 1.2s both;
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 10px var(--green);animation:sdot 1.6s ease-in-out infinite;}
+@keyframes sdot{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(46,204,113,.7)}50%{transform:scale(1.2);box-shadow:0 0 0 7px rgba(46,204,113,0)}}
+.status-sep{width:1px;height:14px;background:var(--border);}
+
+/* ══ NAV ══ */
+nav{display:flex;justify-content:center;gap:8px;padding:28px 0 44px;flex-wrap:wrap;
+  animation:fade-up .7s .1s cubic-bezier(.16,1,.3,1) both;}
+.nav-btn{
+  cursor:none;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:2.5px;text-transform:uppercase;padding:11px 28px;border-radius:100px;
+  border:1px solid var(--border);background:var(--s1);color:var(--muted);
+  transition:all .25s cubic-bezier(.16,1,.3,1);user-select:none;position:relative;overflow:hidden;
+}
+.nav-btn .rpl{position:absolute;border-radius:50%;background:rgba(92,120,255,0.25);
+  transform:scale(0);animation:rpl-out .55s ease-out forwards;pointer-events:none;}
+@keyframes rpl-out{to{transform:scale(4);opacity:0}}
+.nav-btn::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--cyan));
+  border-radius:2px 2px 0 0;transition:width .3s cubic-bezier(.16,1,.3,1);}
+.nav-btn:hover{color:var(--text);border-color:rgba(92,120,255,0.35);transform:translateY(-2px);
+  box-shadow:0 8px 28px rgba(0,0,0,0.4);}
+.nav-btn:hover::after{width:55%;}
+.nav-btn.active{
+  background:linear-gradient(135deg,rgba(92,120,255,0.22),rgba(0,212,255,0.08));
+  border-color:rgba(92,120,255,0.5);color:#fff;
+  box-shadow:0 0 35px rgba(92,120,255,0.28),0 0 80px rgba(92,120,255,0.08),inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.nav-btn.active::after{width:55%;}
+
+/* ══ SECTIONS ══ */
+.sec{display:none;}
+.sec.active{display:block;animation:sec-in .45s cubic-bezier(.16,1,.3,1) both;}
+@keyframes sec-in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* ══ SECTION TITLE ══ */
+.sec-title{
+  display:flex;align-items:center;gap:12px;margin-bottom:28px;
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:500;
+  letter-spacing:4px;text-transform:uppercase;color:var(--acc2);
+}
+.sec-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 14px var(--acc);flex-shrink:0;animation:sdot 2s ease-in-out infinite;}
+.sec-title::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border2),transparent);
+  position:relative;overflow:hidden;}
+
+/* ══ STAFF GRID ══ */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:12px;}
+
+/* ══ CARD ══ */
+.card{
+  background:linear-gradient(145deg,rgba(92,120,255,0.06) 0%,var(--s1) 100%);
+  border:1px solid var(--border);border-radius:16px;padding:0;
+  overflow:hidden;position:relative;
+  transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s,border-color .35s;
+  opacity:0;transform:translateY(20px) scale(.97);
+  animation:card-in .55s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes card-in{to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* animated top border */
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),var(--acc),transparent);
+  background-size:200%;animation:top-flow 3s linear infinite;opacity:.7;
+}
+@keyframes top-flow{0%{background-position:200%}100%{background-position:-200%}}
+.card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.025) 0%,transparent 50%);pointer-events:none;}
+
+.card:hover{
+  transform:translateY(-7px) rotateX(-1deg);
+  border-color:rgba(92,120,255,0.42);
+  box-shadow:0 0 0 1px rgba(92,120,255,0.12),0 24px 60px rgba(0,0,0,0.5),0 0 50px rgba(92,120,255,0.1);
+}
+
+/* card inner */
+.card-inner{padding:16px 18px 14px;position:relative;z-index:1;}
+.card-label{
+  font-family:'DM Mono',monospace;font-size:8.5px;font-weight:500;
+  letter-spacing:2.5px;text-transform:uppercase;color:var(--acc2);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.card-label::before{content:'';width:4px;height:4px;border-radius:50%;
+  background:var(--acc);box-shadow:0 0 8px var(--acc);flex-shrink:0;
+  animation:sdot 2s ease-in-out infinite;}
+
+/* ══ PLAYER ROW ══ */
+.player{
+  display:flex;align-items:center;gap:11px;padding:7px 6px;border-radius:10px;
+  margin-top:2px;transition:background .22s,transform .2s;cursor:none;
+  position:relative;overflow:hidden;
+}
+.player::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(to bottom,var(--acc),var(--cyan));border-radius:2px;
+  opacity:0;transform:scaleY(0);transition:opacity .22s,transform .28s cubic-bezier(.16,1,.3,1);}
+.player:hover{background:rgba(92,120,255,0.09);transform:translateX(5px);}
+.player:hover::before{opacity:1;transform:scaleY(1);}
+.player+.player{border-top:1px solid rgba(255,255,255,0.03);}
+
+.ava{width:33px;height:33px;border-radius:8px;border:1px solid rgba(92,120,255,0.22);
+  flex-shrink:0;image-rendering:pixelated;background:#0f1120;
+  transition:border-color .22s,filter .22s,transform .22s;}
+.player:hover .ava{border-color:rgba(92,120,255,0.6);
+  filter:drop-shadow(0 0 8px rgba(92,120,255,0.5));transform:scale(1.1) rotate(-2deg);}
+.pname{font-size:13.5px;font-weight:500;color:var(--text);flex:1;transition:color .2s;}
+.player:hover .pname{color:var(--acc3);}
+
+.tag{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;letter-spacing:1px;
+  padding:3px 8px;border-radius:6px;text-transform:uppercase;border:1px solid currentColor;
+  flex-shrink:0;position:relative;overflow:hidden;transition:box-shadow .22s,transform .2s;}
+.tag::before{content:'';position:absolute;inset:0;background:currentColor;opacity:.09;}
+.player:hover .tag{box-shadow:0 0 12px currentColor;transform:scale(1.05);}
+
+.t-owner{color:#ff4d6a;}.t-manager{color:var(--orange);}.t-dev{color:var(--cyan);}
+.t-admin{color:#ff6b6b;}.t-mt{color:var(--purple);}.t-mod{color:#45aaf2;}
+.t-stt{color:var(--orange);}.t-tt{color:#a29bfe;}.t-netmod{color:var(--green);}
+
+/* tier badge */
+.tier-badge{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;
+  letter-spacing:1px;padding:2px 7px;border-radius:5px;text-transform:uppercase;
+  flex-shrink:0;margin-left:3px;}
+.tier-HT{background:rgba(255,77,106,.14);color:var(--ht);border:1px solid rgba(255,77,106,.32);}
+.tier-LT{background:rgba(69,170,242,.12);color:var(--lt);border:1px solid rgba(69,170,242,.28);}
+.tier-BL{background:rgba(162,155,254,.12);color:var(--bl);border:1px solid rgba(162,155,254,.28);}
+
+/* warn card */
+.card-warn{border-color:rgba(255,77,106,0.2);}
+.card-warn::before{background:linear-gradient(90deg,transparent,var(--red),rgba(255,77,106,0.4),var(--red),transparent);background-size:200%;animation:top-flow-red 3s linear infinite;opacity:.7;}
+@keyframes top-flow-red{0%{background-position:200%}100%{background-position:-200%}}
+.warn-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;
+  background:rgba(255,77,106,0.09);border:1px solid rgba(255,77,106,0.2);margin-top:6px;
+  font-size:13px;font-weight:600;color:var(--red);transition:background .2s;}
+.warn-row:hover{background:rgba(255,77,106,0.15);}
+.warn-count{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,77,106,0.55);margin-left:auto;}
+
+/* vac card */
+.card-vac{border-color:rgba(255,255,255,0.08);}
+.vac-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  margin-top:6px;font-size:13px;font-weight:500;color:var(--text);transition:background .2s;}
+.vac-row:hover{background:rgba(255,255,255,0.06);}
+
+/* ══ PODIUM ══ */
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:16px;
+  margin-bottom:34px;flex-wrap:wrap;perspective:900px;}
+
+.p-slot{display:flex;flex-direction:column;align-items:center;}
+.p-slot-1{order:2}.p-slot-2{order:1}.p-slot-3{order:3}
+
+.p-card{
+  width:190px;border-radius:22px;overflow:hidden;text-align:center;position:relative;
+  transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s;cursor:none;
+  transform-style:preserve-3d;
+}
+.p-card:hover{transform:translateY(-12px) rotateY(-4deg) scale(1.04) !important;}
+.p-card-1{
+  background:linear-gradient(155deg,rgba(245,200,66,0.12) 0%,var(--s1) 65%);
+  border:1.5px solid rgba(245,200,66,0.52);
+  box-shadow:0 0 60px rgba(245,200,66,0.15),inset 0 1px 0 rgba(245,200,66,0.18);
+  animation:p1-float 5s ease-in-out infinite;
+}
+.p-card-2{
+  background:linear-gradient(155deg,rgba(192,200,216,0.08) 0%,var(--s1) 65%);
+  border:1.5px solid rgba(192,200,216,0.32);
+  box-shadow:0 0 30px rgba(192,200,216,0.06);
+  animation:p1-float 5s 1s ease-in-out infinite;
+}
+.p-card-3{
+  background:linear-gradient(155deg,rgba(212,132,90,0.08) 0%,var(--s1) 65%);
+  border:1.5px solid rgba(212,132,90,0.32);
+  box-shadow:0 0 30px rgba(212,132,90,0.06);
+  animation:p1-float 5s 2s ease-in-out infinite;
+}
+@keyframes p1-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.p-card:hover{animation:none !important;}
+
+/* shimmer */
+.p-shim{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,0.07) 50%,transparent 65%);
+  animation:shim 3.5s ease-in-out infinite;}
+.p-card-2 .p-shim{animation-delay:.9s}.p-card-3 .p-shim{animation-delay:1.8s}
+@keyframes shim{0%,100%{transform:translateX(-140%)}50%{transform:translateX(240%)}}
+
+.p-inner{padding:24px 16px 18px;position:relative;z-index:1;}
+.p-emoji{font-size:36px;display:block;margin-bottom:10px;
+  animation:eb 2.8s ease-in-out infinite;filter:drop-shadow(0 5px 14px rgba(0,0,0,0.5));}
+.p-card-2 .p-emoji{animation-delay:.4s}.p-card-3 .p-emoji{animation-delay:.8s}
+@keyframes eb{0%,100%{transform:scale(1) rotate(0deg) translateY(0)}40%{transform:scale(1.2) rotate(-6deg) translateY(-3px)}70%{transform:scale(1.07) rotate(3deg) translateY(-1px)}}
+
+.p-skin{width:84px;display:block;margin:0 auto 12px;image-rendering:pixelated;
+  filter:drop-shadow(0 12px 26px rgba(0,0,0,0.9));transition:transform .4s cubic-bezier(.16,1,.3,1);}
+.p-card:hover .p-skin{transform:translateY(-7px) scale(1.1);}
+.p-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:9px;}
+.p-score{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;
+  padding:5px 14px;border-radius:100px;border:1px solid;}
+.p-card-1 .p-score{color:var(--gold);border-color:rgba(245,200,66,0.35);background:rgba(245,200,66,0.1);}
+.p-card-2 .p-score{color:var(--silver);border-color:rgba(192,200,216,0.28);background:rgba(192,200,216,0.07);}
+.p-card-3 .p-score{color:var(--bronze);border-color:rgba(212,132,90,0.28);background:rgba(212,132,90,0.07);}
+
+/* rank glow */
+.rank-glow{position:absolute;inset:0;border-radius:22px;pointer-events:none;
+  animation:rg 3s ease-in-out infinite;}
+@keyframes rg{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,0.2)}50%{box-shadow:0 0 0 10px rgba(245,200,66,0)}}
+
+/* podium base */
+.p-base{
+  width:190px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  border:1px solid;border-top:none;border-radius:0 0 14px 14px;
+  position:relative;overflow:hidden;
+}
+.p-base::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);
+  animation:shim 4s ease-in-out infinite;}
+.p-slot-1 .p-base{height:70px;border-color:rgba(245,200,66,0.2);color:rgba(245,200,66,0.35);background:rgba(245,200,66,0.03);}
+.p-slot-2 .p-base{height:48px;border-color:rgba(192,200,216,0.14);color:rgba(192,200,216,0.28);background:rgba(192,200,216,0.015);}
+.p-slot-3 .p-base{height:32px;border-color:rgba(212,132,90,0.14);color:rgba(212,132,90,0.28);background:rgba(212,132,90,0.015);}
+
+/* ══ STATS TABLE ══ */
+.stats-table{
+  background:linear-gradient(145deg,rgba(92,120,255,0.05) 0%,var(--s1) 100%);
+  border:1px solid var(--border);border-radius:18px;overflow:hidden;position:relative;
+}
+.stats-table::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),transparent);
+  background-size:200%;animation:top-flow 3s linear infinite;}
+
+.st-head{display:grid;grid-template-columns:50px 1fr auto;padding:13px 22px;
+  border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);
+  font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.st-row{display:grid;grid-template-columns:50px 1fr auto;padding:12px 22px;align-items:center;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  transition:background .22s,transform .2s;position:relative;cursor:none;
+  opacity:0;animation:row-in .4s ease forwards;}
+@keyframes row-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.st-row:last-child{border-bottom:none;}
+.st-row:hover{background:rgba(92,120,255,0.06);transform:translateX(4px);}
+.st-row::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(to bottom,transparent,var(--acc),transparent);
+  border-radius:2px;opacity:0;transform:scaleY(0);
+  transition:opacity .22s,transform .3s cubic-bezier(.16,1,.3,1);}
+.st-row:hover::before{opacity:1;transform:scaleY(1);}
+.st-num{font-family:'DM Mono',monospace;font-size:13px;color:var(--dim);}
+.st-player{display:flex;align-items:center;gap:12px;}
+.st-player img{width:34px;height:34px;border-radius:8px;border:1px solid rgba(92,120,255,0.18);
+  image-rendering:pixelated;background:#0f1120;transition:border-color .2s,filter .2s,transform .2s;}
+.st-row:hover .st-player img{border-color:rgba(92,120,255,0.5);filter:drop-shadow(0 0 7px rgba(92,120,255,0.4));transform:scale(1.08);}
+.st-player b{font-size:14px;font-weight:600;color:var(--text);transition:color .2s;}
+.st-row:hover .st-player b{color:var(--acc3);}
+.st-score{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--acc2);white-space:nowrap;}
+.zero{color:var(--dim) !important;}
+
+/* ══ HALL OF FAME ══ */
+.hof-intro{text-align:center;margin-bottom:36px;}
+.hof-intro p{color:var(--muted);font-size:13.5px;max-width:480px;margin:0 auto;line-height:1.7;}
+
+.hof-top{display:flex;justify-content:center;align-items:flex-end;gap:18px;margin-bottom:44px;flex-wrap:wrap;perspective:900px;}
+.hof-card{
+  border-radius:22px;padding:26px 18px 22px;text-align:center;width:200px;
+  position:relative;overflow:hidden;
+  transition:transform .38s cubic-bezier(.175,.885,.32,1.275);cursor:none;
+}
+.hof-card:hover{transform:translateY(-12px) rotateY(-4deg) scale(1.04) !important;}
+.hof-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,0.05) 50%,transparent 65%);
+  animation:shim 5s ease-in-out infinite;}
+.hof-1{background:linear-gradient(150deg,rgba(245,200,66,0.12),var(--s1));
+  border:2px solid rgba(245,200,66,0.55);
+  box-shadow:0 0 65px rgba(245,200,66,0.16),inset 0 1px 0 rgba(245,200,66,0.2);
+  transform:scale(1.1);z-index:2;animation:p1-float 5s ease-in-out infinite;}
+.hof-2{background:linear-gradient(150deg,rgba(192,200,216,0.07),var(--s1));
+  border:1.5px solid rgba(192,200,216,0.3);
+  box-shadow:0 0 32px rgba(192,200,216,0.07);animation:p1-float 5s 1s ease-in-out infinite;}
+.hof-3{background:linear-gradient(150deg,rgba(212,132,90,0.07),var(--s1));
+  border:1.5px solid rgba(212,132,90,0.3);
+  box-shadow:0 0 32px rgba(212,132,90,0.07);animation:p1-float 5s 2s ease-in-out infinite;}
+.hof-card:hover{animation:none !important;}
+.hof-crown{font-size:30px;display:block;margin-bottom:8px;animation:eb 2.2s ease-in-out infinite;}
+.hof-2 .hof-crown,.hof-3 .hof-crown{font-size:24px;}
+.hof-skin{width:78px;display:block;margin:0 auto 12px;image-rendering:pixelated;
+  filter:drop-shadow(0 10px 24px rgba(0,0,0,0.8));transition:transform .35s;}
+.hof-card:hover .hof-skin{transform:scale(1.1) translateY(-4px);}
+.hof-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:7px;}
+.hof-stat{font-size:11px;font-weight:600;padding:4px 14px;border-radius:100px;display:inline-block;margin-bottom:4px;}
+.hof-1 .hof-stat{background:rgba(245,200,66,0.13);color:var(--gold);border:1px solid rgba(245,200,66,0.3);}
+.hof-2 .hof-stat{background:rgba(192,200,216,0.1);color:var(--silver);border:1px solid rgba(192,200,216,0.25);}
+.hof-3 .hof-stat{background:rgba(212,132,90,0.1);color:var(--bronze);border:1px solid rgba(212,132,90,0.25);}
+.hof-sub{font-size:11px;color:var(--muted);}
+.hof-glow{position:absolute;inset:0;border-radius:22px;pointer-events:none;animation:rg 3s ease-in-out infinite;}
+
+.hof-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;}
+.hof-row-card{
+  background:linear-gradient(135deg,rgba(92,120,255,0.04),var(--s1));
+  border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px;
+  transition:all .28s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;cursor:none;
+  opacity:0;animation:card-in .5s ease forwards;
+}
+.hof-row-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),transparent);background-size:200%;
+  animation:top-flow 4s linear infinite;opacity:.5;}
+.hof-row-card:hover{transform:translateY(-4px) translateX(2px);
+  border-color:rgba(92,120,255,0.32);box-shadow:0 12px 36px rgba(0,0,0,0.45);}
+.hof-rank-num{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+  color:rgba(255,255,255,0.08);min-width:32px;text-align:center;flex-shrink:0;}
+.hof-row-skin{width:50px;height:90px;image-rendering:pixelated;flex-shrink:0;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,0.6));transition:transform .3s;}
+.hof-row-card:hover .hof-row-skin{transform:scale(1.06) translateY(-3px);}
+.hof-row-info{flex:1;}
+.hof-row-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px;transition:color .2s;}
+.hof-row-card:hover .hof-row-name{color:var(--acc3);}
+.hof-row-tests{font-size:12px;color:var(--muted);}
+.hof-row-tests b{color:var(--acc2);}
+
+/* ══ NEWS ══ */
+.news-grid{display:grid;gap:14px;}
+.news-card{
+  background:linear-gradient(135deg,rgba(92,120,255,0.04),var(--s1));
+  border:1px solid var(--border);border-radius:18px;padding:20px 22px;
+  position:relative;overflow:hidden;
+  transition:all .3s cubic-bezier(.16,1,.3,1);
+  opacity:0;animation:card-in .5s ease forwards;
+}
+.news-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--acc),var(--cyan),transparent);background-size:200%;
+  animation:top-flow 4s linear infinite;opacity:.6;}
+.news-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 50%);pointer-events:none;}
+.news-card:hover{transform:translateY(-5px);border-color:rgba(92,120,255,0.32);
+  box-shadow:0 18px 50px rgba(0,0,0,0.5);}
+.news-card.pinned{border-color:rgba(245,200,66,0.28);background:linear-gradient(135deg,rgba(245,200,66,0.04),var(--s1));}
+.news-card.pinned::before{background:linear-gradient(90deg,transparent,var(--gold),rgba(245,200,66,0.4),transparent);background-size:200%;animation:top-flow 3s linear infinite;}
+.news-card.pinned::after{content:'📌 ЗАКРЕПЛЕНО';font-family:'DM Mono',monospace;font-size:8px;
+  letter-spacing:2px;color:rgba(245,200,66,0.5);
+  position:absolute;top:14px;right:16px;
+  background:transparent;pointer-events:none;}
+
+.news-top{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
+.news-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;flex-shrink:0;transition:transform .25s;}
+.news-card:hover .news-icon{transform:scale(1.1) rotate(-5deg);}
+.news-icon.upd{background:rgba(92,120,255,0.12);border:1px solid rgba(92,120,255,0.25);}
+.news-icon.alert{background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.25);}
+.news-icon.event{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.25);}
+.news-icon.info{background:rgba(0,212,255,0.09);border:1px solid rgba(0,212,255,0.22);}
+.news-meta{flex:1;}
+.news-tag{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
+.news-tag.upd{color:var(--acc);}.news-tag.alert{color:var(--red);}.news-tag.event{color:var(--gold);}.news-tag.info{color:var(--cyan);}
+.news-date{font-size:11px;color:var(--muted);}
+.news-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:7px;line-height:1.4;transition:color .2s;}
+.news-card:hover .news-title{color:var(--acc3);}
+.news-body{font-size:13.5px;color:rgba(232,236,255,0.6);line-height:1.65;}
+
+/* ══ UTILS ══ */
+@keyframes fade-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+@media(max-width:600px){
+  header{padding:30px 0 6px;}
+  .logo-text,.logo-text::before{font-size:23px;letter-spacing:5px;}
+  .logo-img{width:36px;height:36px;}
+  nav{padding:18px 0 30px;gap:6px;}
+  .nav-btn{padding:10px 18px;font-size:9px;}
+  .staff-grid{grid-template-columns:1fr;}
+  .podium,.hof-top{flex-direction:column;align-items:center;gap:10px;}
+  .p-slot-1,.p-slot-2,.p-slot-3{order:unset;}
+  .p-card,.p-base,.hof-card{width:min(260px,88vw);}
+  .p-card-1,.hof-1{transform:scale(1) !important;order:-1;}
+  .st-head,.st-row{grid-template-columns:38px 1fr auto;padding:10px 14px;}
+  .st-player img{width:28px;height:28px;}
+  .st-player b{font-size:13px;}
+  .hof-grid{grid-template-columns:1fr;}
+  .nc{width:55px;height:55px;}
+  .status-bar{gap:12px;padding:8px 18px;font-size:9px;}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-r"></div>
+
+<canvas id="cv"></canvas>
+
+<div class="nc tl"></div><div class="nc tr"></div>
+<div class="nc bl"></div><div class="nc br"></div>
+
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="bg-grid"></div>
+<div class="scanlines"></div>
+
+<div class="wrap">
+  <header>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <img class="logo-img" src="https://minecraft.wiki/images/Mace_JE1_BE1.png" alt="mace">
+        <div style="display:flex;flex-direction:column;align-items:flex-start">
+          <div class="logo-text">MACE</div>
+          <div class="logo-sub">Network Portal</div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span>Сеть онлайн</span>
+        <div class="status-sep"></div>
+        <span>v2.0</span>
+        <div class="status-sep"></div>
+        <span>Official Portal</span>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-btn active" onclick="show('staff',this);rpl(event,this)">Состав команды</div>
+    <div class="nav-btn" onclick="show('stats',this);rpl(event,this)">Недельная норма</div>
+    <div class="nav-btn" onclick="show('hof',this);rpl(event,this)">Зал славы</div>
+    <div class="nav-btn" onclick="show('news',this);rpl(event,this)">Новости</div>
+  </nav>
+
+  <!-- STAFF -->
+  <div id="staff" class="sec active">
+    <div class="sec-title">Участники сети</div>
+    <div class="staff-grid">
+
+      <div class="card" style="animation-delay:.04s">
+        <div class="card-inner">
+          <div class="card-label">Владелец сети</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Kw1st/32" alt="Kw1st">
+            <span class="pname">Kw1st</span><span class="tag t-owner">OWNER</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.08s">
+        <div class="card-inner">
+          <div class="card-label">Менеджер сети</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/wrldome/32" alt="wrldome">
+            <span class="pname">wrldome</span><span class="tag t-manager">MANAGER</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.12s">
+        <div class="card-inner">
+          <div class="card-label">Модератор сети</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/MorozBS/32" alt="MorozBS">
+            <span class="pname" style="color:var(--muted)">MorozBS</span><span class="tag t-netmod">NET-MODER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/pens1oner/32" alt="pens1oner">
+            <span class="pname" style="color:var(--muted)">pens1oner</span><span class="tag t-netmod">NET-MODER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Steverffd/32" alt="Steverffd">
+            <span class="pname" style="color:var(--muted)">Steverffd</span><span class="tag t-netmod">NET-MODER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/AreHTMoJIo4H3y6N/32" alt="AreHTMoJIo4H3y6N">
+            <span class="pname" style="color:var(--muted)">AreHTMoJIo4H3y6N</span><span class="tag t-netmod">NET-MODER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Nastena_abobaaa/32" alt="Nastena_abobaaa">
+            <span class="pname" style="color:var(--muted)">Nastena_abobaaa</span><span class="tag t-netmod">NET-MODER</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.16s">
+        <div class="card-inner">
+          <div class="card-label">Разработчики</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Fanya/32" alt="Fanya">
+            <span class="pname">Fanya</span><span class="tag t-dev">DEV</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Misaqwwe/32" alt="Misaqwwe">
+            <span class="pname">Misaqwwe</span><span class="tag t-dev">DEV</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.20s">
+        <div class="card-inner">
+          <div class="card-label">Администратор тирлиста</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/Beziky/32" alt="Beziky">
+            <span class="pname">Beziky</span><span class="tag t-admin">ADMIN</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.24s">
+        <div class="card-inner">
+          <div class="card-label">Менеджеры тирлиста</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/MorozBS/32" alt="MorozBS">
+            <span class="pname">MorozBS</span><span class="tag t-mt">M. TIER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/pens1oner/32" alt="pens1oner">
+            <span class="pname">pens1oner</span><span class="tag t-mt">M. TIER</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_">
+            <span class="pname">_lol_goga_</span><span class="tag t-mt">M. TIER</span>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <div class="card" style="animation-delay:.32s">
+        <div class="card-inner">
+          <div class="card-label">Старшие тиртестеры</div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_">
+            <span class="pname">_lol_goga_</span><span class="tag t-stt">SR. TT</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/miniDawgy/32" alt="miniDawgy">
+            <span class="pname">miniDawgy</span><span class="tag t-stt">SR. TT</span>
+          </div><div class="player">
+            <img class="ava" src="https://minotar.net/avatar/DorateVodlazik24/32" alt="DorateVodlazik24">
+            <span class="pname">DorateVodlazik24</span><span class="tag t-stt">SR. TT</span>
+          </div>
+          <div class="player">
+            <img class="ava" src="https://minotar.net/avatar/eaqledd/32" alt="eaqledd">
+            <span class="pname">eaqledd</span><span class="tag t-stt">SR. TT</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation-delay:.36s">
+        <div class="card-inner">
+          <div class="card-label">Официальные тиртестеры</div>
+          
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/LaGGenn/32" alt="LaGGenn"><span class="pname">LaGGenn</span><span class="tag t-tt">TT</span><span class="tier-badge tier-LT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/Bringer120/32" alt="Bringer120"><span class="pname">Bringer120</span><span class="tag t-tt">TT</span><span class="tier-badge tier-HT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/miniDawgy/32" alt="miniDawgy"><span class="pname">miniDawgy</span><span class="tag t-tt">TT</span><span class="tier-badge tier-LT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/eaqledd/32" alt="eaqledd"><span class="pname">eaqledd</span><span class="tag t-tt">TT</span><span class="tier-badge tier-LT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/Deluxxx21/32" alt="Deluxxx21"><span class="pname">Deluxxx21</span><span class="tag t-tt">TT</span><span class="tier-badge tier-LT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/W1echu1/32" alt="W1echu1"><span class="pname">W1echu1</span><span class="tag t-tt">TT</span><span class="tier-badge tier-LT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/BirdOfDesert/32" alt="BirdOfDesert"><span class="pname">BirdOfDesert</span><span class="tag t-tt">TT</span><span class="tier-badge tier-HT">LT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/_lol_goga_/32" alt="_lol_goga_"><span class="pname">_lol_goga_</span><span class="tag t-tt">TT</span><span class="tier-badge tier-BL">HT</span></div>
+          <div class="player"><img class="ava" src="https://minotar.net/avatar/HWCry/32" alt="HWCry"><span class="pname">HWCry</span><span class="tag t-tt">TT</span><span class="tier-badge tier-BL">HT</span></div>
+        </div><div class="player"><img class="ava" src="https://minotar.net/avatar/quartor_/32" alt="quartor_"><span class="pname">quartor_</span><span class="tag t-tt">TT</span><span class="tier-badge tier-BL">HT</span></div>
+      </div>
+
+      <div class="card card-warn" style="animation-delay:.40s">
+        <div class="card-inner">
+          <div class="card-label" style="color:var(--red)">Варны сети</div>
+          <div class="warn-row">⚠️ &nbsp;Deluxxx21<span class="warn-count">2/3</span></div>
+        </div>
+      </div>
+
+      <div class="card card-vac" style="animation-delay:.44s">
+        <div class="card-inner">
+          <div class="card-label" style="color:var(--muted)">Отпуска</div>
+          <div class="vac-row">🌴 &nbsp;LaGGenn</div>
+          <div class="vac-row">🌴 &nbsp;pens1oner</div>
+         
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="stats" class="sec">
+    <div class="sec-title">Недельная норма</div>
+    <div class="podium" id="podium"></div>
+    <div class="stats-table">
+      <div class="st-head"><span>#</span><span>Игрок</span><span>Тесты</span></div>
+      <div id="st-list"></div>
+    </div>
+  </div>
+
+  <!-- HOF -->
+  <div id="hof" class="sec">
+    <div class="sec-title">Зал славы</div>
+    <div class="hof-intro">
+      <p>Лучшие тиртестеры MACE за всё время существования сети. Рейтинг по общему числу проведённых тестов.</p>
+    </div>
+    <div class="hof-top" id="hof-podium"></div>
+    <div class="hof-grid" id="hof-list"></div>
+  </div>
+
+  <!-- NEWS -->
+  <div id="news" class="sec">
+    <div class="sec-title">Новости сети</div>
+    <div class="news-grid" id="news-list"></div>
+  </div>
+</div>
+
+<script>
+/* ═══ CURSOR ═══ */
+const cur=document.getElementById('cur'),curR=document.getElementById('cur-r');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+(function anim(){
+  rx+=(mx-rx)*.14;ry+=(my-ry)*.14;
+  curR.style.left=rx+'px';curR.style.top=ry+'px';
+  requestAnimationFrame(anim);
+})();
+
+const hoverEls=['.nav-btn','.card','.player','.p-card','.st-row','.hof-card','.hof-row-card','.news-card','.warn-row','.vac-row'];
+document.addEventListener('mouseover',e=>{
+  if(hoverEls.some(s=>e.target.closest(s))){
+    cur.style.width='18px';cur.style.height='18px';cur.style.background='var(--acc2)';
+    curR.style.width='50px';curR.style.height='50px';curR.style.borderColor='rgba(92,120,255,0.7)';
+  }
+});
+document.addEventListener('mouseout',e=>{
+  if(hoverEls.some(s=>e.target.closest(s))){
+    cur.style.width='10px';cur.style.height='10px';cur.style.background='var(--acc)';
+    curR.style.width='34px';curR.style.height='34px';curR.style.borderColor='rgba(92,120,255,0.45)';
+  }
+});
+
+/* ═══ RIPPLE ═══ */
+function rpl(e,el){
+  const r=document.createElement('span');r.classList.add('rpl');
+  const rect=el.getBoundingClientRect();
+  const sz=Math.max(rect.width,rect.height);
+  r.style.cssText=`width:${sz}px;height:${sz}px;left:${e.clientX-rect.left-sz/2}px;top:${e.clientY-rect.top-sz/2}px;`;
+  el.appendChild(r);setTimeout(()=>r.remove(),600);
+}
+
+/* ═══ CANVAS PARTICLES ═══ */
+(function(){
+  const c=document.getElementById('cv'),ctx=c.getContext('2d');
+  let W,H,dots=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+
+  const COLS=['rgba(92,120,255,','rgba(0,212,255,','rgba(179,111,255,','rgba(255,77,106,'];
+  for(let i=0;i<70;i++){
+    const col=COLS[Math.floor(Math.random()*COLS.length)];
+    dots.push({x:Math.random()*2000,y:Math.random()*1400,
+      vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+      r:Math.random()*1.6+.4,a:Math.random()*.4+.1,
+      twinkle:Math.random()*Math.PI*2,ts:Math.random()*.025+.008,col});
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    dots.forEach(d=>{
+      d.x+=d.vx;d.y+=d.vy;
+      if(d.x<0)d.x=W;if(d.x>W)d.x=0;
+      if(d.y<0)d.y=H;if(d.y>H)d.y=0;
+      d.twinkle+=d.ts;
+      const al=Math.abs(Math.sin(d.twinkle))*.55+.1;
+
+      // repulsion from mouse
+      const dx=mx-d.x,dy=my-d.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<110){
+        const f=(110-dist)/110;
+        d.vx-=dx/dist*f*.4;d.vy-=dy/dist*f*.4;
+        d.vx*=.96;d.vy*=.96;
+      }
+
+      ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+      ctx.fillStyle=d.col+al+')';ctx.fill();
+      ctx.beginPath();ctx.arc(d.x,d.y,d.r*2.5,0,Math.PI*2);
+      ctx.fillStyle=d.col+(al*.12)+')';ctx.fill();
+    });
+
+    // connections
+    for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
+      const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);
+        ctx.strokeStyle=`rgba(92,120,255,${.07*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ═══ PARALLAX ═══ */
+document.addEventListener('mousemove',e=>{
+  const cx=window.innerWidth/2,cy=window.innerHeight/2;
+  const dx=(e.clientX-cx)/cx,dy=(e.clientY-cy)/cy;
+  document.querySelector('.o1').style.transform=`translate(${dx*25}px,${dy*25}px)`;
+  document.querySelector('.o2').style.transform=`translate(${-dx*18}px,${-dy*18}px)`;
+  document.querySelector('.o3').style.transform=`translate(${dx*12}px,${dy*12}px)`;
+});
+
+/* ═══ DATA ═══ */
+const players=[
+  {name:"Deluxxx21",tests:6},{name:"W1echu1",tests:36},{name:"_lol_goga_",tests:16},
+  {name:"LaGGenn",tests:0},{name:"LunarVGX",tests:28},{name:"Hleb354",tests:18},
+  {name:"eaqledd",tests:35},{name:"Who_E_Te",tests:12},{name:"HWCry",tests:3},
+];
+const hofPlayers=[
+  {name:"Deluxxx21",tests:24,weeks:4},{name:"eaqledd",tests:35,weeks:1},
+  {name:"LunarVGX",tests:37,weeks:1},{name:"_lol_goga_",tests:45,weeks:4},
+  {name:"W1echu1",tests:51,weeks:2},{name:"LaGGenn",tests:0,weeks:2},
+  {name:"Hleb354",tests:44,weeks:3},{name:"Who_E_Te",tests:37,weeks:4},{name:"HWCry",tests:3,weeks:1},
+];
+const newsData=[
+  {type:"alert",icon:"⚠️",tag:"Предупреждение",date:"20 марта 2026",title:"LunarVGX получил варн",body:"Участник получил первый официальный варн сети (1/3) Токсичное поведение к стафу.(TT)",pinned:false},
+  {type:"alert",icon:"⚠️",tag:"Предупреждение",date:"16 марта 2026",title:"Deluxxx21 получил варн",body:"Участник получил первый официальный варн сети (1/3) за невыполнение недельной нормы. Повторные нарушения могут повлечь снятие роли.(TT)",pinned:false},
+  {type:"upd",icon:"⚙️",tag:"Обновление",date:"13 марта 2026",title:"Обновление состава: новые тиртестеры, модераторы",body:"В состав официальных тиртестеров и модераторов добавлены новые участники.",pinned:false},
+  {type:"alert",icon:"⚠️",tag:"Предупреждение",date:"08 марта 2026",title:"Hig3rt получил варн",body:"Участник получил первый официальный варн сети (1/3) за невыполнение недельной нормы. Повторные нарушения могут повлечь снятие роли.(TT)",pinned:false},
+  {type:"alert",icon:"⚠️",tag:"Предупреждение",date:"08 марта 2026",title:"Magmarss получил варн",body:"Участник Magmarss получил первый официальный варн сети (1/3) за невыполнение недельной нормы. Повторные нарушения могут повлечь снятие роли.",pinned:false},
+  {type:"event",icon:"🏆",tag:"Ивент",date:"07 марта 2026",title:"Открытие Зала Славы MACE",body:"Теперь на сайте появился раздел «Зал Славы», где отображаются лучшие тиртестеры за всё время существования сети. Попасть в тройку лучших — почётно!",pinned:true},
+  {type:"upd",icon:"⚙️",tag:"Обновление",date:"05 марта 2026",title:"Обновление состава: новые тиртестеры",body:"В состав официальных тиртестеров добавлены новые участники. Также у тестеров теперь отображаются тиры (HT / LT) прямо в карточке состава.",pinned:false},
+  {type:"alert",icon:"⚠️",tag:"Предупреждение",date:"03 марта 2026",title:"Hig3rt получил варн",body:"Участник Hig3rt получил первый официальный варн сети (1/3) за нарушение внутреннего регламента. Повторные нарушения могут повлечь снятие роли.(MOD)",pinned:false},
+  {type:"info",icon:"📋",tag:"Информация",date:"01 марта 2026",title:"Еженедельная норма: новый сезон",body:"Стартовал новый недельный сезон по тестированию. Норма остаётся прежней. Следите за прогрессом во вкладке «Недельная норма».",pinned:false},
+];
+
+function plural(n){
+  let d=n%10,dd=n%100;
+  if(dd>=11&&dd<=14)return'тестов';
+  if(d===1)return'тест';
+  if(d>=2&&d<=4)return'теста';
+  return'тестов';
+}
+const enc=s=>encodeURIComponent(s);
+
+/* ═══ SHOW ═══ */
+function show(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='stats')renderStats();
+  if(id==='hof')renderHof();
+  if(id==='news')renderNews();
+}
+
+/* ═══ STATS ═══ */
+let statsBuilt=false;
+function renderStats(){
+  if(statsBuilt)return;statsBuilt=true;
+  const sorted=[...players].sort((a,b)=>b.tests-a.tests);
+  const podium=document.getElementById('podium');
+  const emojis=['🥈','🔥','🥉'];
+  const cls=['p-card-2','p-card-1','p-card-3'];
+  const slots=['p-slot-2','p-slot-1','p-slot-3'];
+  const order=[1,0,2];
+  order.forEach((ri,i)=>{
+    const p=sorted[ri];if(!p)return;
+    const glow=i===1?'<div class="rank-glow"></div>':'';
+    const shim='<div class="p-shim"></div>';
+    podium.innerHTML+=`
+      <div class="${slots[i]} p-slot">
+        <div class="p-card ${cls[i]}">${glow}${shim}
+          <div class="p-inner">
+            <span class="p-emoji">${emojis[i]}</span>
+            <img class="p-skin" src="https://minotar.net/body/${enc(p.name)}/80" alt="${p.name}" loading="lazy">
+            <div class="p-name">${p.name}</div>
+            <div class="p-score">${p.tests} ${plural(p.tests)}</div>
+          </div>
+        </div>
+        <div class="p-base">#${ri+1}</div>
+      </div>`;
+  });
+  const list=document.getElementById('st-list');
+  sorted.slice(3).forEach((p,i)=>{
+    const z=p.tests===0;
+    list.innerHTML+=`
+      <div class="st-row" style="animation-delay:${i*.07}s">
+        <span class="st-num">${String(i+4).padStart(2,'0')}</span>
+        <div class="st-player">
+          <img src="https://minotar.net/avatar/${enc(p.name)}/34" alt="${p.name}" loading="lazy">
+          <b>${p.name}</b>
+        </div>
+        <span class="st-score${z?' zero':''}">${p.tests} ${plural(p.tests)}</span>
+      </div>`;
+  });
+}
+
+/* ═══ HOF ═══ */
+let hofBuilt=false;
+function renderHof(){
+  if(hofBuilt)return;hofBuilt=true;
+  const el=document.getElementById('hof-podium');
+  const sorted=[...hofPlayers].sort((a,b)=>b.tests-a.tests);
+  const podCls=['hof-2','hof-1','hof-3'];
+  const podOrder=[1,0,2];
+  const crowns=['🥈','👑','🥉'];
+  podOrder.forEach((ri,vi)=>{
+    const p=sorted[ri];if(!p)return;
+    const glow=vi===1?'<div class="hof-glow"></div>':'';
+    el.innerHTML+=`
+      <div class="hof-card ${podCls[vi]}">${glow}
+        <span class="hof-crown">${crowns[vi]}</span>
+        <img class="hof-skin" src="https://minotar.net/body/${enc(p.name)}/80" alt="${p.name}" loading="lazy">
+        <div class="hof-name">${p.name}</div>
+        <div class="hof-stat">${p.tests} ${plural(p.tests)}</div>
+        <div class="hof-sub">${p.weeks} нед. активности</div>
+      </div>`;
+  });
+  const list=document.getElementById('hof-list');
+  sorted.slice(3).forEach((p,i)=>{
+    list.innerHTML+=`
+      <div class="hof-row-card" style="animation-delay:${i*.07}s">
+        <div class="hof-rank-num">${i+4}</div>
+        <img class="hof-row-skin" src="https://minotar.net/body/${enc(p.name)}/60" alt="${p.name}" loading="lazy">
+        <div class="hof-row-info">
+          <div class="hof-row-name">${p.name}</div>
+          <div class="hof-row-tests"><b>${p.tests}</b> ${plural(p.tests)} · ${p.weeks} нед.</div>
+        </div>
+      </div>`;
+  });
+}
+
+/* ═══ NEWS ═══ */
+let newsBuilt=false;
+function renderNews(){
+  if(newsBuilt)return;newsBuilt=true;
+  const list=document.getElementById('news-list');
+  newsData.forEach((n,i)=>{
+    list.innerHTML+=`
+      <div class="news-card${n.pinned?' pinned':''}" style="animation-delay:${i*.07}s">
+        <div class="news-top">
+          <div class="news-icon ${n.type}">${n.icon}</div>
+          <div class="news-meta">
+            <div class="news-tag ${n.type}">${n.tag}</div>
+            <div class="news-date">${n.date}</div>
+          </div>
+        </div>
+        <div class="news-title">${n.title}</div>
+        <div class="news-body">${n.body}</div>
+      </div>`;
+  });
+}
+
+/* ═══ CARD 3D TILT ═══ */
+document.addEventListener('mouseover',e=>{
+  const card=e.target.closest('.card,.p-card,.hof-card,.hof-row-card,.news-card');
+  if(!card)return;
+  function onMove(ev){
+    const r=card.getBoundingClientRect();
+    const x=(ev.clientX-r.left)/r.width-.5;
+    const y=(ev.clientY-r.top)/r.height-.5;
+    if(card.classList.contains('p-card')||card.classList.contains('hof-card')) return;
+    card.style.transform=`translateY(-7px) rotateX(${-y*5}deg) rotateY(${x*5}deg)`;
+  }
+  function onLeave(){
+    card.style.transform='';
+    card.removeEventListener('mousemove',onMove);
+    card.removeEventListener('mouseleave',onLeave);
+  }
+  card.addEventListener('mousemove',onMove);
+  card.addEventListener('mouseleave',onLeave);
+});
+</script>
+</body>
+</html>
