@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSMP — Official Portal</title>
+<link rel="icon" href="https://minecraft.wiki/images/Kit_JE2_BE2.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07030f;
+  --p1:       #8b5cf6;
+  --p2:       #a78bfa;
+  --p3:       #c4b5fd;
+  --p-dark:   #5b21b6;
+  --p-border: rgba(139,92,246,0.22);
+  --p-soft:   rgba(139,92,246,0.09);
+  --surface:  rgba(139,92,246,0.055);
+  --surface2: rgba(255,255,255,0.055);
+  --border:   rgba(255,255,255,0.07);
+  --text:     #f3eeff;
+  --text2:    rgba(243,238,255,0.55);
+  --text3:    rgba(243,238,255,0.28);
+  --red:      #f43f5e;
+  --green:    #34d399;
+  --gold:     #fbbf24;
+  --silver:   #94a3b8;
+  --bronze:   #c2703a;
+  --r:        16px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Outfit',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+
+/* ── BG ── */
+.bg-scene{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.blob{position:absolute;border-radius:50%;filter:blur(100px);}
+.b1{width:820px;height:820px;background:radial-gradient(circle,rgba(91,33,182,0.28) 0%,transparent 70%);top:-320px;left:-240px;animation:bm1 20s ease-in-out infinite alternate;}
+.b2{width:600px;height:600px;background:radial-gradient(circle,rgba(139,92,246,0.18) 0%,transparent 70%);bottom:-220px;right:-160px;animation:bm2 16s ease-in-out infinite alternate;}
+.b3{width:440px;height:440px;background:radial-gradient(circle,rgba(167,139,250,0.1) 0%,transparent 70%);top:40%;left:55%;animation:bpulse 10s ease-in-out infinite;}
+.b4{width:300px;height:300px;background:radial-gradient(circle,rgba(196,181,253,0.07) 0%,transparent 70%);top:20%;left:15%;animation:bpulse 14s 3s ease-in-out infinite;}
+@keyframes bm1{from{transform:translate(0,0)}to{transform:translate(70px,55px)}}
+@keyframes bm2{from{transform:translate(0,0)}to{transform:translate(-50px,-40px)}}
+@keyframes bpulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:1}}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(139,92,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.04) 1px,transparent 1px);background-size:56px 56px;}
+.bg-vignette{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(7,3,15,0.7) 100%);}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:10;max-width:1120px;margin:0 auto;padding:0 24px 100px;}
+
+/* ── HEADER ── */
+header{
+  display:flex;flex-direction:column;align-items:center;
+  padding:60px 0 0;text-align:center;
+  animation:fade-up .7s cubic-bezier(.16,1,.3,1) both;
+}
+.kit-icon{
+  width:62px;height:62px;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 0 18px rgba(139,92,246,0.9)) drop-shadow(0 0 50px rgba(139,92,246,0.4));
+  animation:kit-float 4.5s ease-in-out infinite;
+  margin-bottom:14px;
+}
+@keyframes kit-float{0%,100%{transform:translateY(0) rotate(-5deg) scale(1);}50%{transform:translateY(-12px) rotate(5deg) scale(1.06);}}
+.site-name{
+  font-size:58px;font-weight:900;
+  letter-spacing:16px;text-transform:uppercase;
+  background:linear-gradient(135deg,#fff 0%,var(--p3) 40%,var(--p1) 70%,#fff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:name-glow 4s ease-in-out infinite alternate;
+}
+@keyframes name-glow{
+  from{filter:drop-shadow(0 0 30px rgba(139,92,246,0.3));}
+  to{filter:drop-shadow(0 0 60px rgba(139,92,246,0.7));}
+}
+.site-sub{
+  margin-top:10px;
+  font-family:'Fira Code',monospace;
+  font-size:10px;letter-spacing:5px;color:var(--text3);text-transform:uppercase;
+}
+.online-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:18px;padding:7px 20px;
+  background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.22);
+  border-radius:100px;font-size:11px;font-weight:600;color:var(--green);letter-spacing:.6px;
+}
+.odot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 8px var(--green);
+  animation:odot-pulse 2s ease-in-out infinite;
+}
+@keyframes odot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,0.7)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+
+/* ── NAV ── */
+nav{
+  display:flex;justify-content:center;gap:8px;
+  padding:36px 0 46px;
+  animation:fade-up .7s .08s cubic-bezier(.16,1,.3,1) both;
+}
+.nav-btn{
+  position:relative;cursor:pointer;user-select:none;
+  font-size:13px;font-weight:700;letter-spacing:.3px;
+  padding:12px 28px;border-radius:13px;
+  border:1px solid var(--border);background:var(--surface);color:var(--text2);
+  transition:all .28s cubic-bezier(.16,1,.3,1);overflow:hidden;
+}
+.nav-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,0.14),rgba(91,33,182,0.1));opacity:0;transition:opacity .28s;}
+.nav-btn::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:2px;background:linear-gradient(90deg,var(--p-dark),var(--p1),var(--p2));border-radius:2px 2px 0 0;transition:width .3s cubic-bezier(.16,1,.3,1);}
+.nav-btn:hover{color:var(--p3);border-color:var(--p-border);}
+.nav-btn:hover::before{opacity:1;}
+.nav-btn:hover::after{width:60%;}
+.nav-btn.active{color:#fff;border-color:var(--p1);box-shadow:0 0 30px rgba(139,92,246,0.22),inset 0 1px 0 rgba(255,255,255,0.12);}
+.nav-btn.active::before{opacity:1;}
+.nav-btn.active::after{width:60%;}
+
+/* ── SECTIONS ── */
+.sec{display:none;}
+.sec.active{display:block;animation:sec-reveal .45s cubic-bezier(.16,1,.3,1) both;}
+@keyframes sec-reveal{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+/* ── SEC HEADER ── */
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.sec-hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--p1);box-shadow:0 0 14px var(--p1);animation:odot-pulse 2.5s ease-in-out infinite;}
+.sec-hdr-title{font-family:'Fira Code',monospace;font-size:10px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--p2);}
+.sec-hdr-line{flex:1;height:1px;background:linear-gradient(90deg,var(--p-border),transparent);}
+
+/* ── STAFF GRID ── */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:14px;}
+
+/* ── CARD ── */
+.card{
+  position:relative;
+  background:linear-gradient(145deg,rgba(139,92,246,0.07) 0%,rgba(12,6,24,0.7) 100%);
+  border:1px solid var(--p-border);border-radius:var(--r);
+  overflow:hidden;backdrop-filter:blur(14px);
+  transition:transform .32s cubic-bezier(.16,1,.3,1),box-shadow .32s,border-color .32s;
+  opacity:0;transform:translateY(18px);
+  animation:card-in .55s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes card-in{to{opacity:1;transform:translateY(0);}}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p1),var(--p2),transparent);opacity:.75;}
+.card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,0.07) 0%,transparent 55%);pointer-events:none;}
+.card:hover{transform:translateY(-6px);border-color:rgba(139,92,246,0.5);box-shadow:0 0 0 1px rgba(139,92,246,0.14),0 24px 60px rgba(0,0,0,0.55),0 0 50px rgba(139,92,246,0.1);}
+
+.card-hdr{display:flex;align-items:center;gap:11px;padding:16px 18px 13px;border-bottom:1px solid rgba(139,92,246,0.1);position:relative;z-index:1;}
+.card-label{font-family:'Fira Code',monospace;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--p2);flex:1;}
+.card-cnt{font-family:'Fira Code',monospace;font-size:10px;color:var(--text3);background:var(--surface2);padding:3px 9px;border-radius:100px;border:1px solid var(--border);}
+.card-body{padding:6px 12px 12px;position:relative;z-index:1;}
+
+/* ── PLAYER ── */
+.player{display:flex;align-items:center;gap:12px;padding:8px 8px;border-radius:10px;margin-top:3px;transition:background .22s;cursor:default;}
+.player:hover{background:rgba(139,92,246,0.09);}
+.ava{width:36px;height:36px;border-radius:9px;border:1.5px solid rgba(139,92,246,0.25);image-rendering:pixelated;background:#0d0720;flex-shrink:0;display:block;transition:border-color .22s,filter .22s;}
+.player:hover .ava{border-color:rgba(139,92,246,0.6);filter:drop-shadow(0 0 7px rgba(139,92,246,0.4));}
+.pname{font-size:14px;font-weight:600;color:var(--text);flex:1;}
+.tag{font-family:'Fira Code',monospace;font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:4px 9px;border-radius:7px;border:1px solid currentColor;flex-shrink:0;position:relative;overflow:hidden;transition:box-shadow .22s;}
+.tag::before{content:'';position:absolute;inset:0;background:currentColor;opacity:.1;}
+.player:hover .tag{box-shadow:0 0 10px currentColor;}
+.t-owner{color:#f43f5e;}.t-manager{color:#fb923c;}.t-dev{color:#22d3ee;}.t-admin{color:#f87171;}.t-mt{color:#a78bfa;}.t-mod{color:#818cf8;}.t-stt{color:#fbbf24;}.t-tt{color:#c084fc;}
+
+/* ── WARN CARD ── */
+.card-warn{border-color:rgba(244,63,94,0.28);background:linear-gradient(145deg,rgba(244,63,94,0.06) 0%,rgba(12,6,24,0.7) 100%);}
+.card-warn::before{background:linear-gradient(90deg,transparent,var(--red),rgba(244,63,94,0.4),transparent);}
+.card-warn::after{background:linear-gradient(135deg,rgba(244,63,94,0.06) 0%,transparent 55%);}
+.card-warn:hover{border-color:rgba(244,63,94,0.55);box-shadow:0 0 0 1px rgba(244,63,94,0.12),0 24px 60px rgba(0,0,0,0.55),0 0 50px rgba(244,63,94,0.1);}
+.warn-item{display:flex;align-items:center;gap:12px;padding:11px 13px;margin-top:6px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);border-radius:10px;}
+.warn-left{display:flex;flex-direction:column;gap:3px;flex:1;}
+.warn-name{font-size:14px;font-weight:600;color:var(--text);}
+.warn-sub{font-family:'Fira Code',monospace;font-size:9px;color:rgba(244,63,94,0.55);letter-spacing:1px;}
+.warn-pips{display:flex;gap:5px;align-items:center;}
+.pip{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(244,63,94,0.3);}
+.pip.on{background:var(--red);border-color:var(--red);box-shadow:0 0 8px rgba(244,63,94,0.7);}
+
+/* ── VAC CARD ── */
+.card-vac{border-color:rgba(167,139,250,0.28);background:linear-gradient(145deg,rgba(167,139,250,0.06) 0%,rgba(12,6,24,0.7) 100%);}
+.card-vac::before{background:linear-gradient(90deg,transparent,var(--p2),rgba(167,139,250,0.4),transparent);}
+.card-vac::after{background:linear-gradient(135deg,rgba(167,139,250,0.06) 0%,transparent 55%);}
+.card-vac:hover{border-color:rgba(167,139,250,0.55);box-shadow:0 0 0 1px rgba(167,139,250,0.12),0 24px 60px rgba(0,0,0,0.55),0 0 50px rgba(167,139,250,0.1);}
+.vac-item{display:flex;align-items:center;gap:12px;padding:11px 13px;margin-top:6px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:10px;font-size:14px;font-weight:500;color:var(--text);}
+
+/* ══════════════════════════════
+   НЕДЕЛЬНАЯ НОРМА
+══════════════════════════════ */
+
+/* PODIUM */
+.podium-wrap{
+  display:flex;justify-content:center;align-items:flex-end;
+  gap:16px;margin-bottom:36px;flex-wrap:wrap;
+}
+.p-slot{display:flex;flex-direction:column;align-items:center;}
+.p-slot-1{order:2}.p-slot-2{order:1}.p-slot-3{order:3}
+
+.p-card{
+  width:192px;border-radius:20px;border:1px solid;
+  overflow:hidden;text-align:center;position:relative;
+  transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s;
+  cursor:default;
+  background:linear-gradient(145deg,rgba(139,92,246,0.07) 0%,rgba(12,6,24,0.8) 100%);
+}
+.p-card:hover{transform:translateY(-10px) scale(1.04);}
+
+.p-card-1{
+  border-color:rgba(251,191,36,0.5);
+  background:linear-gradient(160deg,rgba(251,191,36,0.13) 0%,rgba(12,6,24,0.9) 65%);
+  box-shadow:0 0 50px rgba(251,191,36,0.14),0 20px 50px rgba(0,0,0,0.5);
+}
+.p-card-2{
+  border-color:rgba(148,163,184,0.4);
+  background:linear-gradient(160deg,rgba(148,163,184,0.09) 0%,rgba(12,6,24,0.9) 65%);
+  box-shadow:0 0 30px rgba(148,163,184,0.07),0 20px 50px rgba(0,0,0,0.4);
+}
+.p-card-3{
+  border-color:rgba(194,112,58,0.4);
+  background:linear-gradient(160deg,rgba(194,112,58,0.09) 0%,rgba(12,6,24,0.9) 65%);
+  box-shadow:0 0 30px rgba(194,112,58,0.07),0 20px 50px rgba(0,0,0,0.4);
+}
+
+/* shimmer sweep */
+.p-shim{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,0.06) 50%,transparent 70%);
+  animation:shim-move 3.5s ease-in-out infinite;
+}
+.p-card-2 .p-shim{animation-delay:.9s}.p-card-3 .p-shim{animation-delay:1.8s}
+@keyframes shim-move{0%,100%{transform:translateX(-120%)}50%{transform:translateX(220%)}}
+
+.p-inner{padding:22px 16px 16px;position:relative;z-index:1;}
+
+.p-emoji{
+  font-size:36px;display:block;margin-bottom:10px;
+  animation:emoji-bounce 2.5s ease-in-out infinite;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+.p-card-2 .p-emoji{animation-delay:.4s}.p-card-3 .p-emoji{animation-delay:.8s}
+@keyframes emoji-bounce{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.18) rotate(-5deg)}}
+
+.p-skin{
+  width:82px;display:block;margin:0 auto 12px;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,0.8));
+  transition:transform .35s cubic-bezier(.16,1,.3,1);
+}
+.p-card:hover .p-skin{transform:translateY(-6px) scale(1.07);}
+.p-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:9px;letter-spacing:.3px;}
+.p-score{
+  display:inline-block;font-family:'Fira Code',monospace;
+  font-size:11px;font-weight:700;
+  padding:5px 14px;border-radius:100px;border:1px solid;
+}
+.p-card-1 .p-score{color:var(--gold);border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.1);}
+.p-card-2 .p-score{color:var(--silver);border-color:rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);}
+.p-card-3 .p-score{color:#d4845a;border-color:rgba(194,112,58,0.3);background:rgba(194,112,58,0.08);}
+
+/* podium base platform */
+.p-base{
+  width:192px;display:flex;align-items:center;justify-content:center;
+  font-family:'Fira Code',monospace;font-size:9px;letter-spacing:2px;
+  border:1px solid;border-top:none;border-radius:0 0 12px 12px;
+}
+.p-slot-1 .p-base{height:68px;border-color:rgba(251,191,36,0.22);color:rgba(251,191,36,0.38);background:rgba(251,191,36,0.03);}
+.p-slot-2 .p-base{height:46px;border-color:rgba(148,163,184,0.16);color:rgba(148,163,184,0.32);background:rgba(148,163,184,0.02);}
+.p-slot-3 .p-base{height:30px;border-color:rgba(194,112,58,0.16);color:rgba(194,112,58,0.32);background:rgba(194,112,58,0.02);}
+
+/* ── STATS TABLE ── */
+.stats-table{
+  background:linear-gradient(145deg,rgba(139,92,246,0.06) 0%,rgba(12,6,24,0.7) 100%);
+  border:1px solid var(--p-border);border-radius:var(--r);
+  overflow:hidden;backdrop-filter:blur(14px);position:relative;
+}
+.stats-table::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--p1),var(--p2),transparent);}
+
+.st-head{
+  display:grid;grid-template-columns:54px 1fr 140px;
+  padding:14px 22px;border-bottom:1px solid var(--border);
+  background:rgba(139,92,246,0.04);
+  font-family:'Fira Code',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--p2);
+}
+.st-row{
+  display:grid;grid-template-columns:54px 1fr 140px;
+  padding:12px 22px;align-items:center;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  transition:background .2s;position:relative;
+  opacity:0;animation:row-in .4s ease forwards;
+}
+@keyframes row-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.st-row:last-child{border-bottom:none;}
+.st-row:hover{background:rgba(139,92,246,0.05);}
+.st-row::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:2px;background:linear-gradient(to bottom,transparent,var(--p1),transparent);border-radius:2px;opacity:0;transition:opacity .2s;}
+.st-row:hover::before{opacity:1;}
+
+.st-num{font-family:'Fira Code',monospace;font-size:12px;color:var(--text3);}
+.st-player{display:flex;align-items:center;gap:12px;}
+.st-player img{width:34px;height:34px;border-radius:9px;border:1.5px solid rgba(139,92,246,0.2);image-rendering:pixelated;background:#0d0720;}
+.st-player b{font-size:14px;font-weight:600;color:var(--text);}
+.st-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.st-score{font-family:'Fira Code',monospace;font-size:13px;font-weight:700;color:var(--p2);}
+.st-score.zero{color:var(--text3);}
+.st-bar-bg{width:96px;height:3px;border-radius:2px;background:rgba(139,92,246,0.12);overflow:hidden;}
+.st-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--p-dark),var(--p1),var(--p2));box-shadow:0 0 6px var(--p1);transition:width 1s cubic-bezier(.16,1,.3,1);}
+
+/* ── UTILS ── */
+@keyframes fade-up{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+
+@media(max-width:640px){
+  .site-name{font-size:38px;letter-spacing:10px;}
+  .kit-icon{width:46px;height:46px;}
+  .nav-btn{padding:11px 18px;font-size:12px;}
+  .staff-grid{grid-template-columns:1fr;}
+  .podium-wrap{flex-direction:column;align-items:center;}
+  .p-slot-1,.p-slot-2,.p-slot-3{order:unset;}
+  .p-card,.p-base{width:min(260px,88vw);}
+  .st-head,.st-row{grid-template-columns:40px 1fr 100px;padding:10px 14px;}
+  .st-bar-bg{width:60px;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-scene">
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="blob b3"></div><div class="blob b4"></div>
+</div>
+<div class="bg-grid"></div>
+<div class="bg-vignette"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <img class="kit-icon" src="https://minecraft.wiki/images/Kit_JE2_BE2.png" alt="Kit" onerror="this.src='https://minecraft.wiki/images/Kit_JE1.png'">
+    <div class="site-name">DSMP</div>
+    <div class="site-sub">Official Portal</div>
+    <div class="online-badge"><div class="odot"></div>Сеть онлайн</div>
+  </header>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-btn active" onclick="show('staff',this)">Состав команды</div>
+    <div class="nav-btn" onclick="show('stats',this)">Недельная норма</div>
+  </nav>
+
+  <!-- STAFF -->
+  <div id="staff" class="sec active">
+    <div class="sec-hdr">
+      <div class="sec-hdr-dot"></div>
+      <div class="sec-hdr-title">Участники сети</div>
+      <div class="sec-hdr-line"></div>
+    </div>
+    <div class="staff-grid" id="staff-grid"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="stats" class="sec">
+    <div class="sec-hdr">
+      <div class="sec-hdr-dot"></div>
+      <div class="sec-hdr-title">Недельная норма</div>
+      <div class="sec-hdr-line"></div>
+    </div>
+    <div class="podium-wrap" id="podium"></div>
+    <div class="stats-table">
+      <div class="st-head"><span>#</span><span>Игрок</span><span style="text-align:right">Тесты</span></div>
+      <div id="st-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const staffData = [
+  { label:'Владелец сети',        players:[{name:'Kw1st',    tag:'OWNER',   tc:'t-owner'}] },
+  { label:'Менеджер сети',        players:[{name:'wrldome',  tag:'MANAGER', tc:'t-manager'}] },
+  { label:'Разработчики',         players:[{name:'Fanya',tag:'DEV',tc:'t-dev'},{name:'Misaqwwe',tag:'DEV',tc:'t-dev'}] },
+  { label:'Администратор',        players:[{name:'Misaqwwe',   tag:'ADMIN',   tc:'t-admin'}] },
+  { label:'Менеджеры тирлиста',   players:[{name:'MorozBS',tag:'M. TIER',tc:'t-mt'}] },
+  
+  { label:'Старшие тиртестеры',   players:[{name:'Sakrey',tag:'SR. TT',tc:'t-stt'}] },
+  { label:'Тиртестеры',           players:[
+    {name:'Jorituns',tag:'TT',tc:'t-tt'},
+    {name:'Sakrey',tag:'TT',tc:'t-tt'},{name:'TheCookieNoob',tag:'TT',tc:'t-tt'},
+    {name:'stratiyoR',tag:'TT',tc:'t-tt'},{name:'Balenciona',tag:'TT',tc:'t-tt'},{name:'DargarNnik',tag:'TT',tc:'t-tt'},{name:'YshyHead',tag:'TT',tc:'t-tt'},
+    
+  ]},
+];
+
+const warnsData = [
+  {name:'nickname', count:1, max:3, reason:'Нарушение регламента'},
+];
+
+const vacsData = [
+  {name:'nickname'},
+];
+
+const players = [
+  {name:'YshyHead',tests:7},{name:'Jorituns',tests:36},
+  {name:'Balenciona',tests:10},{name:'TheCookieNoob',tests:0},
+  {name:'Sakrey',tests:0},{name:'stratiyoR',tests:17},{name:'DargarNnik',tests:19},
+  
+];
+
+function plural(n){
+  const d=n%10,dd=n%100;
+  if(dd>=11&&dd<=14)return'тестов';
+  if(d===1)return'тест';
+  if(d>=2&&d<=4)return'теста';
+  return'тестов';
+}
+const enc = s => encodeURIComponent(s);
+
+/* ── STAFF ── */
+function buildStaff(){
+  const g = document.getElementById('staff-grid');
+  let h = '';
+  staffData.forEach((s,i) => {
+    h += `<div class="card" style="animation-delay:${i*.065}s">
+      <div class="card-hdr">
+        <div class="card-label">${s.label}</div>
+        <div class="card-cnt">${s.players.length}</div>
+      </div>
+      <div class="card-body">`;
+    s.players.forEach(p => {
+      h += `<div class="player">
+        <img class="ava" src="https://minotar.net/avatar/${enc(p.name)}/36" alt="${p.name}" loading="lazy">
+        <span class="pname">${p.name}</span>
+        <span class="tag ${p.tc}">${p.tag}</span>
+      </div>`;
+    });
+    h += `</div></div>`;
+  });
+
+  // WARNS header
+  h += `<div class="sec-hdr" style="margin-top:36px;grid-column:1/-1">
+    <div class="sec-hdr-dot" style="background:#f43f5e;box-shadow:0 0 14px #f43f5e"></div>
+    <div class="sec-hdr-title" style="color:#f87171">Варны сети</div>
+    <div class="sec-hdr-line" style="background:linear-gradient(90deg,rgba(244,63,94,0.3),transparent)"></div>
+  </div>`;
+
+  if(warnsData.length === 0){
+    h += `<div class="card" style="animation-delay:.02s"><div class="card-hdr"><div class="card-label">Нет активных варнов</div></div></div>`;
+  } else {
+    warnsData.forEach((w,i) => {
+      const pips = Array.from({length:w.max},(_,j)=>`<div class="pip${j<w.count?' on':''}"></div>`).join('');
+      h += `<div class="card card-warn" style="animation-delay:${i*.08}s">
+        <div class="card-hdr">
+          <div class="card-label" style="color:#f87171">Варн</div>
+          <div class="card-cnt">${w.count}/${w.max}</div>
+        </div>
+        <div class="card-body">
+          <div class="warn-item">
+            <img class="ava" src="https://minotar.net/avatar/${enc(w.name)}/36" alt="${w.name}" loading="lazy" style="border-color:rgba(244,63,94,0.3)">
+            <div class="warn-left">
+              <span class="warn-name">${w.name}</span>
+              <span class="warn-sub">${w.reason||''}</span>
+            </div>
+            <div class="warn-pips">${pips}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // VACS header
+  h += `<div class="sec-hdr" style="margin-top:28px;grid-column:1/-1">
+    <div class="sec-hdr-dot" style="background:var(--p2);box-shadow:0 0 14px var(--p2)"></div>
+    <div class="sec-hdr-title" style="color:var(--p3)">Отпуска</div>
+    <div class="sec-hdr-line" style="background:linear-gradient(90deg,rgba(196,181,253,0.3),transparent)"></div>
+  </div>`;
+
+  if(vacsData.length === 0){
+    h += `<div class="card card-vac" style="animation-delay:.02s"><div class="card-hdr"><div class="card-label" style="color:var(--p3)">Никто не в отпуске</div></div></div>`;
+  } else {
+    h += `<div class="card card-vac" style="animation-delay:.05s">
+      <div class="card-hdr">
+        <div class="card-label" style="color:var(--p3)">В отпуске</div>
+        <div class="card-cnt">${vacsData.length}</div>
+      </div>
+      <div class="card-body">`;
+    vacsData.forEach(v => {
+      h += `<div class="player">
+        <img class="ava" src="https://minotar.net/avatar/${enc(v.name)}/36" alt="${v.name}" loading="lazy" style="border-color:rgba(167,139,250,0.3)">
+        <span class="pname">${v.name}</span>
+        <span style="font-size:17px">🌴</span>
+      </div>`;
+    });
+    h += `</div></div>`;
+  }
+
+  g.innerHTML = h;
+}
+
+/* ── STATS ── */
+let statsBuilt = false;
+function buildStats(){
+  if(statsBuilt) return; statsBuilt = true;
+  const sorted = [...players].sort((a,b)=>b.tests-a.tests);
+  const max = sorted[0].tests || 1;
+
+  // modern cool emojis for top 3
+  const emojis = ['👑','⚡','🔥'];
+  const cls    = ['p-card-1','p-card-2','p-card-3'];
+  const slots  = ['p-slot-1','p-slot-2','p-slot-3'];
+  const labels = ['#1','#2','#3'];
+
+  const podium = document.getElementById('podium');
+  sorted.slice(0,3).forEach((p,i) => {
+    podium.innerHTML += `
+    <div class="${slots[i]}">
+      <div class="p-card ${cls[i]}">
+        <div class="p-shim"></div>
+        <div class="p-inner">
+          <span class="p-emoji">${emojis[i]}</span>
+          <img class="p-skin" src="https://minotar.net/body/${enc(p.name)}/80" alt="${p.name}" loading="lazy">
+          <div class="p-name">${p.name}</div>
+          <div class="p-score">${p.tests} ${plural(p.tests)}</div>
+        </div>
+      </div>
+      <div class="p-base">${labels[i]}</div>
+    </div>`;
+  });
+
+  const body = document.getElementById('st-body');
+  sorted.slice(3).forEach((p,i) => {
+    const z = p.tests === 0;
+    const pct = Math.round((p.tests/max)*100);
+    body.innerHTML += `
+    <div class="st-row" style="animation-delay:${i*.07}s">
+      <span class="st-num">${String(i+4).padStart(2,'0')}</span>
+      <div class="st-player">
+        <img src="https://minotar.net/avatar/${enc(p.name)}/34" alt="${p.name}" loading="lazy">
+        <b>${p.name}</b>
+      </div>
+      <div class="st-right">
+        <span class="st-score${z?' zero':''}">${p.tests} ${plural(p.tests)}</span>
+        <div class="st-bar-bg"><div class="st-bar" style="width:0" data-w="${pct}%"></div></div>
+      </div>
+    </div>`;
+  });
+
+  setTimeout(()=>{
+    document.querySelectorAll('.st-bar').forEach(b=>b.style.width=b.dataset.w);
+  }, 120);
+}
+
+function show(id, btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='stats') buildStats();
+}
+
+buildStaff();
+</script>
+</body>
+</html>
